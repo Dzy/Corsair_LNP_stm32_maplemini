@@ -95,9 +95,15 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 #define NEOPIXEL_RESET 0
 #define NUM_PIXELS0 6
 #define NUM_PIXELS1 6
-#define DMA_BUFF_SIZE0 (NUM_PIXELS0*24)+10
-#define DMA_BUFF_SIZE1 (NUM_PIXELS1*24)+10
+#define DMA_BUFF_SIZE0 ((NUM_PIXELS0+1)*24)
+#define DMA_BUFF_SIZE1 ((NUM_PIXELS1+1)*24)
 
+  PixelRGB_t pixel0[NUM_PIXELS0];
+  uint32_t dmaBuffer0[DMA_BUFF_SIZE0];
+  uint32_t *pBuff0;
+  PixelRGB_t pixel1[NUM_PIXELS1];
+  uint32_t dmaBuffer1[DMA_BUFF_SIZE1];
+  uint32_t *pBuff1;
 /**
   * @brief  The application entry point.
   * @retval int
@@ -105,12 +111,7 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  PixelRGB_t pixel0[NUM_PIXELS0] = {0};
-  uint32_t dmaBuffer0[DMA_BUFF_SIZE0] = {0};
-  uint32_t *pBuff0;
-  PixelRGB_t pixel1[NUM_PIXELS1] = {0};
-  uint32_t dmaBuffer1[DMA_BUFF_SIZE1] = {0};
-  uint32_t *pBuff1;
+
    int32_t i, j;
 
   /* USER CODE END 1 */
@@ -160,34 +161,33 @@ HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
       pixel1[i].color.g = 0;
       pixel1[i].color.b = x;
     }
-    printf("colour %d\n", x);
+    //printf("colour %d\n", x);
+
     x+=10;
-    if(x>255) {
-      x = 0;
-    }
+
 
     pBuff0 = dmaBuffer0;
     for (i = 0; i < NUM_PIXELS0; i++) {
        for (j = 23; j >= 0; j--) {
          if ((pixel0[i].data >> j) & 0x01) {
-           *pBuff0++ = NEOPIXEL_ONE;
+           *pBuff0 = NEOPIXEL_ONE;
          } else {
-           *pBuff0++ = NEOPIXEL_ZERO;
+           *pBuff0 = NEOPIXEL_ZERO;
          }
-         //pBuff0++;
+         pBuff0++;
      }
     }
-  *pBuff0 = NEOPIXEL_RESET;
+    *pBuff0 = NEOPIXEL_RESET;
 
     pBuff1 = dmaBuffer1;
     for (i = 0; i < NUM_PIXELS1; i++) {
        for (j = 23; j >= 0; j--) {
          if ((pixel1[i].data >> j) & 0x01) {
-           *pBuff1++ = NEOPIXEL_ONE;
+           *pBuff1 = NEOPIXEL_ONE;
          } else {
-           *pBuff1++ = NEOPIXEL_ZERO;
+           *pBuff1 = NEOPIXEL_ZERO;
          }
-         //pBuff1++;
+         pBuff1++;
      }
     }
     *pBuff1 = NEOPIXEL_RESET;
@@ -198,11 +198,11 @@ HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_RESET);
     while(led_trigger != true);
 
-
     //printf("HAL_TIM_PWM_Start_DMA\n");
     HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_1, dmaBuffer0, DMA_BUFF_SIZE0);
     HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_2, dmaBuffer1, DMA_BUFF_SIZE1);
     while(ledsupdated != true);
+    //HAL_Delay(1);
     led_trigger = false;
 
     
