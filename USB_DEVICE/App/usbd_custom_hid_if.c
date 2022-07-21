@@ -32,6 +32,7 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 __ALIGN_BEGIN uint8_t report[16] __ALIGN_END;
+extern uint8_t device_serial_32[4];
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -105,7 +106,7 @@ __ALIGN_BEGIN uint8_t report[16] __ALIGN_END;
 #define PROTOCOL_STATUS_OK             0x00
 #define PROTOCOL_STATUS_ERROR          0xFF
 
-static int8_t CUSTOM_HID_Send(uint8_t *buffer, size_t size);
+static int8_t CUSTOM_HID_SendOk(uint8_t *buffer, size_t size);
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -239,25 +240,24 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
 
   switch(hhid->Report_buf[0]) {
     case READ_FIRMWARE_VERSION: {
-      printf("READ_FIRMWARE_VERSION %d\n", event_idx);
-      uint8_t corsairLightingNodeMessage[16] = {PROTOCOL_RESPONSE_OK, 0x00, 0x0A, 0x04};
-      CUSTOM_HID_Send(corsairLightingNodeMessage, 4);
+
+      printf("READ_FIRMWARE_VERSION\n");
+      uint8_t corsairLightingNodeMessage[16] = {0x00, 0x0A, 0x04};
+      CUSTOM_HID_SendOk(corsairLightingNodeMessage, 3);
       break;
     }
 
     case READ_DEVICE_ID: {
-      printf("READ_DEVICE_ID %d\n", event_idx);
-      uint8_t corsairLightingNodeMessage[16] = {PROTOCOL_RESPONSE_OK, 0x4E, 0x91, 0x67, 0xB9};
-      CUSTOM_HID_Send(corsairLightingNodeMessage, 5);
+      printf("READ_DEVICE_ID\n");
+      CUSTOM_HID_SendOk(device_serial_32, 4);
       break;
     }
 
     default: {
       
-      printf("Other event_idx = 0x%.2x buf[0] = 0x%.2x\n", event_idx, hhid->Report_buf[0]);
-      
-      uint8_t corsairLightingNodeMessage[16] = {PROTOCOL_RESPONSE_OK};
-      CUSTOM_HID_Send(corsairLightingNodeMessage, 1);
+      printf("Other event_idx\n");
+      uint8_t corsairLightingNodeMessage[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeMessage, 0);
       break;
     }
   }
@@ -281,16 +281,16 @@ static int8_t USBD_CUSTOM_HID_SendReport_FS(uint8_t *report, uint16_t len)
 /* USER CODE END 7 */
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
-static int8_t CUSTOM_HID_Send(uint8_t *buffer, size_t size){
-  uint32_t *t;
-  t = (uint32_t*)&report;
-  t[0] = 0x00;
-  t[1] = 0x00;
-  t[2] = 0x00;
-  t[3] = 0x00;
+static int8_t CUSTOM_HID_SendOk(uint8_t *buffer, size_t size){
+  uint64_t *t;
+  t = (uint64_t*)&report;
+  t[0] = 0;
+  t[1] = 0;
 
+  report[0] = PROTOCOL_RESPONSE_OK;
   for(uint8_t i = 0; i<size; i++) {
-    report[i] = buffer[i];
+    report[i+1] = buffer[i];
+    printf("...%.2x\n", buffer[i]);
   }
 
   return USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, report, 16);

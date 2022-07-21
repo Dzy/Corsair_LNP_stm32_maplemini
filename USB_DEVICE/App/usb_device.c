@@ -54,7 +54,7 @@ USBD_HandleTypeDef hUsbDeviceFS;
  * -- Insert your external function declaration here --
  */
 /* USER CODE BEGIN 1 */
-
+extern void Get_SerialNum(void);
 /* USER CODE END 1 */
 
 /**
@@ -64,8 +64,14 @@ USBD_HandleTypeDef hUsbDeviceFS;
 void MX_USB_DEVICE_Init(void)
 {
   /* USER CODE BEGIN USB_DEVICE_Init_PreTreatment */
-
-  /* Enable usb and wait a bit and then set activity led on */
+  /*
+    Generate "unique" 32-bit device id here from micros id
+    Used both in the usb stack and in corsair protocol
+  */
+  Get_SerialNum();
+  /*
+    Enable usb and wait a bit and then set activity led on
+  */
   HAL_GPIO_WritePin(USBENA_GPIO_Port, USBENA_Pin, GPIO_PIN_RESET);
   HAL_Delay(1500);
   HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);

@@ -33,7 +33,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+extern uint8_t device_serial_32[4];
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -100,7 +100,7 @@
   * @{
   */
 
-static void Get_SerialNum(void);
+void Get_SerialNum(void);
 static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len);
 
 /**
@@ -201,7 +201,7 @@ __ALIGN_BEGIN uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ] __ALIGN_END;
 #endif
 __ALIGN_BEGIN uint8_t USBD_StringSerial[USB_SIZ_STRING_SERIAL] __ALIGN_END = {
   USB_SIZ_STRING_SERIAL,
-  USB_DESC_TYPE_STRING,
+  USB_DESC_TYPE_STRING
 };
 
 /**
@@ -245,16 +245,8 @@ uint8_t * USBD_FS_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   * @param  length : Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t * USBD_FS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
-{
-  if(speed == 0)
-  {
-    USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_FS, USBD_StrDesc, length);
-  }
-  else
-  {
-    USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_FS, USBD_StrDesc, length);
-  }
+uint8_t * USBD_FS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+  USBD_GetString((uint8_t *)USBD_PRODUCT_STRING_FS, USBD_StrDesc, length);
   return USBD_StrDesc;
 }
 
@@ -264,8 +256,7 @@ uint8_t * USBD_FS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length
   * @param  length : Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t * USBD_FS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
-{
+uint8_t * USBD_FS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
   UNUSED(speed);
   USBD_GetString((uint8_t *)USBD_MANUFACTURER_STRING, USBD_StrDesc, length);
   return USBD_StrDesc;
@@ -277,16 +268,10 @@ uint8_t * USBD_FS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *l
   * @param  length : Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t * USBD_FS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
-{
+uint8_t * USBD_FS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
   UNUSED(speed);
   *length = USB_SIZ_STRING_SERIAL;
-
-  /* Update the serial number string descriptor with the data from the unique
-   * ID */
-  Get_SerialNum();
   /* USER CODE BEGIN USBD_FS_SerialStrDescriptor */
-
   /* USER CODE END USBD_FS_SerialStrDescriptor */
   return (uint8_t *) USBD_StringSerial;
 }
@@ -316,16 +301,8 @@ uint8_t * USBD_FS_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   * @param  length : Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t * USBD_FS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
-{
-  if(speed == 0)
-  {
-    USBD_GetString((uint8_t *)USBD_INTERFACE_STRING_FS, USBD_StrDesc, length);
-  }
-  else
-  {
-    USBD_GetString((uint8_t *)USBD_INTERFACE_STRING_FS, USBD_StrDesc, length);
-  }
+uint8_t * USBD_FS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+  USBD_GetString((uint8_t *)USBD_INTERFACE_STRING_FS, USBD_StrDesc, length);
   return USBD_StrDesc;
 }
 
@@ -334,21 +311,17 @@ uint8_t * USBD_FS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *leng
   * @param  None
   * @retval None
   */
-static void Get_SerialNum(void)
-{
-  uint32_t deviceserial0, deviceserial1, deviceserial2;
+void Get_SerialNum(void) {
+  uint32_t *t;
 
-  deviceserial0 = *(uint32_t *) DEVICE_ID1;
-  deviceserial1 = *(uint32_t *) DEVICE_ID2;
-  deviceserial2 = *(uint32_t *) DEVICE_ID3;
+  t = (uint32_t*)&device_serial_32;
+  *t = (uint32_t)(*(uint32_t *) DEVICE_ID1 + *(uint32_t *) DEVICE_ID2 + *(uint32_t *) DEVICE_ID3 +  (uint32_t *) &Get_SerialNum);
 
-  deviceserial0 += deviceserial2;
+  printf("serial t[0] %.4lx\n", t[0]);
+  printf("serial device_serial_32 %.4lx\n", *(uint32_t *) device_serial_32);
 
-  if (deviceserial0 != 0)
-  {
-    IntToUnicode(deviceserial0, &USBD_StringSerial[2], 8);
-    IntToUnicode(deviceserial1, &USBD_StringSerial[18], 4);
-  }
+  IntToUnicode(*t, &USBD_StringSerial[2], 8);
+
 }
 
 /**
@@ -358,21 +331,15 @@ static void Get_SerialNum(void)
   * @param  len: buffer length
   * @retval None
   */
-static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len)
-{
+static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len) {
   uint8_t idx = 0;
 
-  for (idx = 0; idx < len; idx++)
-  {
-    if (((value >> 28)) < 0xA)
-    {
+  for (idx = 0; idx < len; idx++) {
+    if (((value >> 28)) < 0xA) {
       pbuf[2 * idx] = (value >> 28) + '0';
-    }
-    else
-    {
+    } else {
       pbuf[2 * idx] = (value >> 28) + 'A' - 10;
     }
-
     value = value << 4;
 
     pbuf[2 * idx + 1] = 0;
