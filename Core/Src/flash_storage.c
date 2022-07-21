@@ -10,8 +10,8 @@ uint32_t* flash_storage_init(size_t size) {
 
 	uint32_t *flash_storage_page0 = (uint32_t *)(0x8000000+(126*1024));
 	uint32_t *flash_storage_page1 = (uint32_t *)(0x8000000+(127*1024));
-	printf("  -%p(%.8lx)\n", flash_storage_page0, *flash_storage_page0);
-	printf("  -%p(%.8lx)\n", flash_storage_page1, *flash_storage_page1);
+	//printf("  -%p(%.8lx)\n", flash_storage_page0, *flash_storage_page0);
+	//printf("  -%p(%.8lx)\n", flash_storage_page1, *flash_storage_page1);
 
 	/*
 		Check if both pages are erased

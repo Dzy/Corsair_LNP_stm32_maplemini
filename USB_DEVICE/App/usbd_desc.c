@@ -317,9 +317,6 @@ void Get_SerialNum(void) {
   t = (uint32_t*)&device_serial_32;
   *t = (uint32_t)(*(uint32_t *) DEVICE_ID1 + *(uint32_t *) DEVICE_ID2 + *(uint32_t *) DEVICE_ID3 +  (uint32_t *) &Get_SerialNum);
 
-  printf("serial t[0] %.4lx\n", t[0]);
-  printf("serial device_serial_32 %.4lx\n", *(uint32_t *) device_serial_32);
-
   IntToUnicode(*t, &USBD_StringSerial[2], 8);
 
 }

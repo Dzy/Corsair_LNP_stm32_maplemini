@@ -73,7 +73,7 @@ void MX_USB_DEVICE_Init(void)
     Enable usb and wait a bit and then set activity led on
   */
   HAL_GPIO_WritePin(USBENA_GPIO_Port, USBENA_Pin, GPIO_PIN_RESET);
-  HAL_Delay(1500);
+  HAL_Delay(500);
   HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
   /* USER CODE END USB_DEVICE_Init_PreTreatment */
 

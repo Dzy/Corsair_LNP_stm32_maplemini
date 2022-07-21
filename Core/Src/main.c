@@ -19,6 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "crc.h"
+#include "tim.h"
+#include "dma.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "gpio.h"
@@ -26,6 +28,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,6 +36,7 @@
 typedef struct {
   uint32_t booted;
 } __attribute__((aligned(4))) Settings_TypeDef;
+extern bool led_trigger;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -48,6 +52,7 @@ typedef struct {
 
 /* USER CODE BEGIN PV */
 uint8_t device_serial_32[4];
+bool ledsupdated = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,6 +74,29 @@ int _write(int file, char *data, int len) {
    return (status == HAL_OK ? len : 0);
 }
 /* USER CODE END 0 */
+typedef union {
+  struct {
+    uint8_t b;
+    uint8_t r;
+    uint8_t g;
+  } color;
+  uint32_t data;
+} PixelRGB_t;
+
+void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
+{
+  HAL_TIM_PWM_Stop_DMA(htim, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Stop_DMA(htim, TIM_CHANNEL_2);
+  ledsupdated = true;
+}
+
+#define NEOPIXEL_ZERO 27
+#define NEOPIXEL_ONE  57
+#define NEOPIXEL_RESET 0
+#define NUM_PIXELS0 6
+#define NUM_PIXELS1 6
+#define DMA_BUFF_SIZE0 (NUM_PIXELS0*24)+10
+#define DMA_BUFF_SIZE1 (NUM_PIXELS1*24)+10
 
 /**
   * @brief  The application entry point.
@@ -77,6 +105,13 @@ int _write(int file, char *data, int len) {
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  PixelRGB_t pixel0[NUM_PIXELS0] = {0};
+  uint32_t dmaBuffer0[DMA_BUFF_SIZE0] = {0};
+  uint32_t *pBuff0;
+  PixelRGB_t pixel1[NUM_PIXELS1] = {0};
+  uint32_t dmaBuffer1[DMA_BUFF_SIZE1] = {0};
+  uint32_t *pBuff1;
+   int32_t i, j;
 
   /* USER CODE END 1 */
 
@@ -100,19 +135,80 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  printf("hello");
+  MX_DMA_Init();
+  MX_TIM2_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t x = 0;
   while (1)
   {
     /* USER CODE END WHILE */
-
+HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
     /* USER CODE BEGIN 3 */
+
+    for (i = 0; i < NUM_PIXELS0; i++) {
+      pixel0[i].color.r = x;
+      pixel0[i].color.g = 0;
+      pixel0[i].color.b = 0;
+    }
+    for (i = 0; i < NUM_PIXELS1; i++) {
+      pixel1[i].color.r = 0;
+      pixel1[i].color.g = 0;
+      pixel1[i].color.b = x;
+    }
+    printf("colour %d\n", x);
+    x+=10;
+    if(x>255) {
+      x = 0;
+    }
+
+    pBuff0 = dmaBuffer0;
+    for (i = 0; i < NUM_PIXELS0; i++) {
+       for (j = 23; j >= 0; j--) {
+         if ((pixel0[i].data >> j) & 0x01) {
+           *pBuff0++ = NEOPIXEL_ONE;
+         } else {
+           *pBuff0++ = NEOPIXEL_ZERO;
+         }
+         //pBuff0++;
+     }
+    }
+  *pBuff0 = NEOPIXEL_RESET;
+
+    pBuff1 = dmaBuffer1;
+    for (i = 0; i < NUM_PIXELS1; i++) {
+       for (j = 23; j >= 0; j--) {
+         if ((pixel1[i].data >> j) & 0x01) {
+           *pBuff1++ = NEOPIXEL_ONE;
+         } else {
+           *pBuff1++ = NEOPIXEL_ZERO;
+         }
+         //pBuff1++;
+     }
+    }
+    *pBuff1 = NEOPIXEL_RESET;
+
+    //dmaBuffer0[DMA_BUFF_SIZE0 - 1] = 0; // last element must be 0!
+    //dmaBuffer1[DMA_BUFF_SIZE1 - 1] = 0; // last element must be 0!
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_RESET);
+    while(led_trigger != true);
+
+
+    //printf("HAL_TIM_PWM_Start_DMA\n");
+    HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_1, dmaBuffer0, DMA_BUFF_SIZE0);
+    HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_2, dmaBuffer1, DMA_BUFF_SIZE1);
+    while(ledsupdated != true);
+    led_trigger = false;
+
+    
+    
+    //HAL_Delay(10);
+    
   }
   /* USER CODE END 3 */
 }

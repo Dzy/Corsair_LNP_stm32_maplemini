@@ -41,6 +41,7 @@ Core/Src/gpio.c \
 Core/Src/usart.c \
 Core/Src/stm32f1xx_it.c \
 Core/Src/stm32f1xx_hal_msp.c \
+Core/Src/system_stm32f1xx.c \
 USB_DEVICE/App/usb_device.c \
 USB_DEVICE/App/usbd_desc.c \
 USB_DEVICE/App/usbd_custom_hid_if.c \
@@ -62,14 +63,18 @@ Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_exti.c \
 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim.c \
 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim_ex.c \
 Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.c \
-Core/Src/system_stm32f1xx.c \
+Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_crc.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
 Middlewares/ST/STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid.c \
 Core/Src/flash_storage.c \
 Core/Src/crc.c \
-Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_crc.c
+Core/Src/dma.c \
+Core/Src/tim.c
+
+#Core/Src/dma.c \
+#Core/Src/tim.c
 
 # ASM sources
 ASM_SOURCES =  \

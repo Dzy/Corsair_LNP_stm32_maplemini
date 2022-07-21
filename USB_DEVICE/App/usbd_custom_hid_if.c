@@ -22,7 +22,8 @@
 #include "usbd_custom_hid_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include <stdint.h>
+#include <stdbool.h>
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,6 +34,8 @@
 /* Private variables ---------------------------------------------------------*/
 __ALIGN_BEGIN uint8_t report[16] __ALIGN_END;
 extern uint8_t device_serial_32[4];
+
+bool led_trigger;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -93,7 +96,7 @@ extern uint8_t device_serial_32[4];
 #define WRITE_LED_CLEAR                0x34
 #define WRITE_LED_GROUP_SET            0x35
 #define WRITE_LED_EXTERNAL_TEMP        0x36
-#define WRITE_LED_GROUPS_CLEAR         0x37
+#define WRITE_LED_GROUP_CLEAR          0x37
 #define WRITE_LED_MODE                 0x38
 #define WRITE_LED_BRIGHTNESS           0x39
 #define WRITE_LED_COUNT                0x3A
@@ -107,6 +110,7 @@ extern uint8_t device_serial_32[4];
 #define PROTOCOL_STATUS_ERROR          0xFF
 
 static int8_t CUSTOM_HID_SendOk(uint8_t *buffer, size_t size);
+static int8_t CUSTOM_HID_SendError(void);
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -234,30 +238,109 @@ static int8_t CUSTOM_HID_DeInit_FS(void)
 static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
 {
   /* USER CODE BEGIN 6 */
-  HAL_GPIO_TogglePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin);
+  //HAL_GPIO_TogglePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin);
 
   USBD_CUSTOM_HID_HandleTypeDef *hhid = (USBD_CUSTOM_HID_HandleTypeDef*)hUsbDeviceFS.pClassData;
 
-  switch(hhid->Report_buf[0]) {
+  uint8_t *corsairLightingNodeMessage, *msg;
+  corsairLightingNodeMessage = hhid->Report_buf;
+  //msg = corsairLightingNodeMessage;
+
+  switch(*corsairLightingNodeMessage) {
     case READ_FIRMWARE_VERSION: {
 
-      printf("READ_FIRMWARE_VERSION\n");
-      uint8_t corsairLightingNodeMessage[16] = {0x00, 0x0A, 0x04};
-      CUSTOM_HID_SendOk(corsairLightingNodeMessage, 3);
+      //printf("READ_FIRMWARE_VERSION\n");
+      uint8_t corsairLightingNodeReply[16] = {0x00, 0x0A, 0x04};
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 3);
       break;
     }
 
     case READ_DEVICE_ID: {
-      printf("READ_DEVICE_ID\n");
+      //printf("READ_DEVICE_ID\n");
       CUSTOM_HID_SendOk(device_serial_32, 4);
       break;
     }
 
+    case READ_BOOTLOADER_VERSION: {
+      //printf("READ_BOOTLOADER_VERSION\n");
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      break;
+    }
+
+    /*
+      Do NOT response too fast
+    */
+    case WRITE_LED_TRIGGER: {
+      //HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
+      //printf("WRITE_LED_TRIGGER\n");
+      if(led_trigger){
+        //printf("    error\n");
+        CUSTOM_HID_SendError();
+        break;
+      } else {
+        led_trigger = true;
+      }
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      //HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_RESET);
+      break;
+    }
+
+    case WRITE_LED_MODE: {
+      //printf("WRITE_LED_MODE Channel(%d) Mode(%.02x)\n", msg[1], msg[2]);
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      break;
+    }
+
+    case WRITE_LED_CLEAR: {
+      //printf("WRITE_LED_CLEAR\n");
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      break;
+    }
+
+    case WRITE_LED_GROUP_SET: {
+      //printf("WRITE_LED_GROUP_SET\n");
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      break;
+    }
+
+    case WRITE_LED_GROUP_CLEAR: {
+      //printf("WRITE_LED_GROUP_CLEAR\n");
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      break;
+    }
+
+    case WRITE_LED_BRIGHTNESS: {
+      //printf("WRITE_LED_BRIGHTNESS\n");
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      break;
+    }
+
+    case WRITE_LED_PORT_TYPE: {
+      //printf("WRITE_LED_PORT_TYPE\n");
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      break;
+    }
+
+    case WRITE_LED_COLOR_VALUES: {
+      //printf("WRITE_LED_COLOR_VALUES\n");
+      //for(volatile uint32_t i = 0; i<0x8ffff; i++){};
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      break;
+    }
+
     default: {
-      
-      printf("Other event_idx\n");
-      uint8_t corsairLightingNodeMessage[16];
-      CUSTOM_HID_SendOk(corsairLightingNodeMessage, 0);
+      //printf("Other event_idx %.02x\n", msg[0]);
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;
     }
   }
@@ -290,8 +373,20 @@ static int8_t CUSTOM_HID_SendOk(uint8_t *buffer, size_t size){
   report[0] = PROTOCOL_RESPONSE_OK;
   for(uint8_t i = 0; i<size; i++) {
     report[i+1] = buffer[i];
-    printf("...%.2x\n", buffer[i]);
+    //printf("...%.2x\n", buffer[i]);
   }
+
+  return USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, report, 16);
+
+}
+
+static int8_t CUSTOM_HID_SendError(void){
+  uint64_t *t;
+  t = (uint64_t*)&report;
+  t[0] = 0;
+  t[1] = 0;
+
+  report[0] = PROTOCOL_RESPONSE_ERROR;
 
   return USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, report, 16);
 
