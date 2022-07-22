@@ -123,6 +123,21 @@ static int8_t CUSTOM_HID_SendError(void);
   */
 
 /* USER CODE BEGIN PRIVATE_MACRO */
+typedef union {
+  struct {
+    uint8_t b;
+    uint8_t r;
+    uint8_t g;
+  } color;
+  uint32_t data;
+} PixelRGB_t;
+
+extern PixelRGB_t pixel0[];
+extern uint32_t dmaBuffer0[];
+extern uint32_t *pBuff0;
+extern PixelRGB_t pixel1[];
+extern uint32_t dmaBuffer1[];
+extern uint32_t *pBuff1;
 
 /* USER CODE END PRIVATE_MACRO */
 
@@ -244,11 +259,10 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
 
   uint8_t *corsairLightingNodeMessage, *msg;
   corsairLightingNodeMessage = hhid->Report_buf;
-  //msg = corsairLightingNodeMessage;
+  msg = corsairLightingNodeMessage;
 
   switch(*corsairLightingNodeMessage) {
     case READ_FIRMWARE_VERSION: {
-
       //printf("READ_FIRMWARE_VERSION\n");
       uint8_t corsairLightingNodeReply[16] = {0x00, 0x0A, 0x04};
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 3);
@@ -328,10 +342,65 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;
     }
+/*
+32 0 0 l(12) [R] i(00) 28 i(01) 69 i(02) ab i(03) ec i(04) ff i(05) ff i(06) ff i(07) ff i(08) ff i(09) ff i(0a) ff i(0b) ff 
+32 0 0 l(12) [G] i(00) d1 i(01) df i(02) ed i(03) fb i(04) ff i(05) ff i(06) ff i(07) ff i(08) ca i(09) 89 i(0a) 47 i(0b) 06 
+32 0 0 l(12) [B] i(00) d7 i(01) 96 i(02) 54 i(03) 13 i(04) 2e i(05) 70 i(06) b1 i(07) f3 i(08) f4 i(09) e5 i(0a) d7 i(0b) c9
 
+32 1 0 l(12) [R] i(00) ff i(01) ff i(02) ff i(03) ff i(04) e7 i(05) a6 i(06) 64 i(07) 23 i(08) 1e i(09) 60 i(0a) a1 i(0b) e2 
+32 1 0 l(12) [G] i(00) 11 i(01) 53 i(02) 94 i(03) d5 i(04) fa i(05) ec i(06) de i(07) d0 i(08) cf i(09) dd i(0a) eb i(0b) f9 
+32 1 0 l(12) [B] i(00) cc i(01) da i(02) e8 i(03) f6 i(04) ff i(05) ff i(06) ff i(07) ff i(08) e1 i(09) 9f i(0a) 5e i(0b) 1d
+*/
     case WRITE_LED_COLOR_VALUES: {
       //printf("WRITE_LED_COLOR_VALUES\n");
-      //for(volatile uint32_t i = 0; i<0x8ffff; i++){};
+
+      printf("%.02x %d %d l(%d) ",msg[0], msg[1], msg[2], msg[3], msg[4]);
+
+      if(msg[4] == 0) {
+        if(msg[3]>24) {
+          msg[3]=24;
+        }
+        printf("[R] ");
+        for(int i = 0; i<(msg[3]); i++) {
+          if(msg[1] == 0) {
+            pixel0[i].color.r = msg[i+5];
+          } else {
+            pixel1[i].color.r = msg[i+5];
+          }
+          printf("i(%0.2x) %.02x ", i, msg[i+5]);
+        }
+        printf("\n");
+      }
+      if(msg[4] == 1) {
+        if(msg[3]>24) {
+          msg[3]=24;
+        }
+        printf("[G] ");
+        for(int i = 0; i<(msg[3]); i++) {
+          if(msg[1] == 0) {
+            pixel0[i].color.g = msg[i+5];
+          } else {
+            pixel1[i].color.g = msg[i+5];
+          }
+          printf("i(%0.2x) %.02x ", i, msg[i+5]);
+        }
+        printf("\n");
+      }
+      if(msg[4] == 2) {
+        if(msg[3]>24) {
+          msg[3]=24;
+        }
+        printf("[B] ");
+        for(int i = 0; i<(msg[3]); i++) {
+          if(msg[1] == 0) {
+            pixel0[i].color.b = msg[i+5];
+          } else {
+            pixel1[i].color.b = msg[i+5];
+          }
+          printf("i(%0.2x) %.02x ", i, msg[i+5]);
+        }
+        printf("\n");
+      }
       uint8_t corsairLightingNodeReply[16];
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;

@@ -93,17 +93,17 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 #define NEOPIXEL_ZERO 27
 #define NEOPIXEL_ONE  57
 #define NEOPIXEL_RESET 0
-#define NUM_PIXELS0 6
-#define NUM_PIXELS1 6
-#define DMA_BUFF_SIZE0 ((NUM_PIXELS0+1)*24)
-#define DMA_BUFF_SIZE1 ((NUM_PIXELS1+1)*24)
+#define NUM_PIXELS0 12
+#define NUM_PIXELS1 12
+#define DMA_BUFF_SIZE0 ((24+2)*24)
+#define DMA_BUFF_SIZE1 ((24+2)*24)
 
-  PixelRGB_t pixel0[NUM_PIXELS0];
-  uint32_t dmaBuffer0[DMA_BUFF_SIZE0];
-  uint32_t *pBuff0;
-  PixelRGB_t pixel1[NUM_PIXELS1];
-  uint32_t dmaBuffer1[DMA_BUFF_SIZE1];
-  uint32_t *pBuff1;
+PixelRGB_t pixel0[(NUM_PIXELS0+1)];
+uint32_t dmaBuffer0[DMA_BUFF_SIZE0];
+uint32_t *pBuff0;
+PixelRGB_t pixel1[(NUM_PIXELS0+1)];
+uint32_t dmaBuffer1[DMA_BUFF_SIZE1];
+uint32_t *pBuff1;
 /**
   * @brief  The application entry point.
   * @retval int
@@ -150,7 +150,7 @@ int main(void)
     /* USER CODE END WHILE */
 HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
     /* USER CODE BEGIN 3 */
-
+/*
     for (i = 0; i < NUM_PIXELS0; i++) {
       pixel0[i].color.r = x;
       pixel0[i].color.g = 0;
@@ -161,11 +161,8 @@ HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
       pixel1[i].color.g = 0;
       pixel1[i].color.b = x;
     }
-    //printf("colour %d\n", x);
-
     x+=10;
-
-
+*/
     pBuff0 = dmaBuffer0;
     for (i = 0; i < NUM_PIXELS0; i++) {
        for (j = 23; j >= 0; j--) {
@@ -177,7 +174,8 @@ HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
          pBuff0++;
      }
     }
-    *pBuff0 = NEOPIXEL_RESET;
+    *pBuff0++ = NEOPIXEL_RESET;
+    *pBuff0++ = NEOPIXEL_RESET;
 
     pBuff1 = dmaBuffer1;
     for (i = 0; i < NUM_PIXELS1; i++) {
@@ -190,7 +188,8 @@ HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
          pBuff1++;
      }
     }
-    *pBuff1 = NEOPIXEL_RESET;
+    *pBuff1++ = NEOPIXEL_RESET;
+    *pBuff0++ = NEOPIXEL_RESET;
 
     //dmaBuffer0[DMA_BUFF_SIZE0 - 1] = 0; // last element must be 0!
     //dmaBuffer1[DMA_BUFF_SIZE1 - 1] = 0; // last element must be 0!
