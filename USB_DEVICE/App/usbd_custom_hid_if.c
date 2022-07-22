@@ -22,8 +22,7 @@
 #include "usbd_custom_hid_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-#include <stdint.h>
-#include <stdbool.h>
+#include "ledplayer.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,7 +34,7 @@
 __ALIGN_BEGIN uint8_t report[16] __ALIGN_END;
 extern uint8_t device_serial_32[4];
 
-bool led_trigger;
+extern bool led_trigger;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -133,10 +132,12 @@ typedef union {
 } PixelRGB_t;
 
 extern PixelRGB_t pixel0[];
-extern uint32_t dmaBuffer0[];
-extern uint32_t *pBuff0;
 extern PixelRGB_t pixel1[];
+
+extern uint32_t dmaBuffer0[];
 extern uint32_t dmaBuffer1[];
+
+extern uint32_t *pBuff0;
 extern uint32_t *pBuff1;
 
 /* USER CODE END PRIVATE_MACRO */
@@ -282,11 +283,7 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
       break;
     }
 
-    /*
-      Do NOT response too fast
-    */
     case WRITE_LED_TRIGGER: {
-      //HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
       //printf("WRITE_LED_TRIGGER\n");
       if(led_trigger){
         //printf("    error\n");
@@ -297,7 +294,6 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
       }
       uint8_t corsairLightingNodeReply[16];
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
-      //HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_RESET);
       break;
     }
 
@@ -307,41 +303,51 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;
     }
-
+/*
+WRITE_LED_CLEAR 34 0 0 0 0 0
+WRITE_LED_CLEAR 34 1 0 0 0 0
+*/
     case WRITE_LED_CLEAR: {
-      //printf("WRITE_LED_CLEAR\n");
+      //printf("WRITE_LED_CLEAR %.02x %d %d %d %d %d\n",msg[0], msg[1], msg[2], msg[3], msg[4], msg[5]);
       uint8_t corsairLightingNodeReply[16];
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;
     }
 
     case WRITE_LED_GROUP_SET: {
-      //printf("WRITE_LED_GROUP_SET\n");
+      printf("WRITE_LED_GROUP_SET\n");
       uint8_t corsairLightingNodeReply[16];
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;
     }
 
     case WRITE_LED_GROUP_CLEAR: {
-      //printf("WRITE_LED_GROUP_CLEAR\n");
+      printf("WRITE_LED_GROUP_CLEAR\n");
       uint8_t corsairLightingNodeReply[16];
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;
     }
 
     case WRITE_LED_BRIGHTNESS: {
-      //printf("WRITE_LED_BRIGHTNESS\n");
+      printf("WRITE_LED_BRIGHTNESS\n");
       uint8_t corsairLightingNodeReply[16];
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;
     }
 
     case WRITE_LED_PORT_TYPE: {
-      //printf("WRITE_LED_PORT_TYPE\n");
+      printf("WRITE_LED_PORT_TYPE %.02x %d %d %d %d %d\n",msg[0], msg[1], msg[2], msg[3], msg[4], msg[5]);
       uint8_t corsairLightingNodeReply[16];
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;
     }
+
+    case WRITE_LED_COUNT: {
+      printf("WRITE_LED_COUNT %.02x %d %d %d %d %d\n",msg[0], msg[1], msg[2], msg[3], msg[4], msg[5]);
+      uint8_t corsairLightingNodeReply[16];
+      CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
+      break;
+    }  
 /*
 32 0 0 l(12) [R] i(00) 28 i(01) 69 i(02) ab i(03) ec i(04) ff i(05) ff i(06) ff i(07) ff i(08) ff i(09) ff i(0a) ff i(0b) ff 
 32 0 0 l(12) [G] i(00) d1 i(01) df i(02) ed i(03) fb i(04) ff i(05) ff i(06) ff i(07) ff i(08) ca i(09) 89 i(0a) 47 i(0b) 06 
@@ -354,52 +360,52 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
     case WRITE_LED_COLOR_VALUES: {
       //printf("WRITE_LED_COLOR_VALUES\n");
 
-      printf("%.02x %d %d l(%d) ",msg[0], msg[1], msg[2], msg[3], msg[4]);
+      //printf("%.02x %d %d l(%d)",msg[0], msg[1], msg[2], msg[3]);
 
       if(msg[4] == 0) {
         if(msg[3]>24) {
           msg[3]=24;
         }
-        printf("[R] ");
+        //printf("[R] ");
         for(int i = 0; i<(msg[3]); i++) {
           if(msg[1] == 0) {
             pixel0[i].color.r = msg[i+5];
           } else {
             pixel1[i].color.r = msg[i+5];
           }
-          printf("i(%0.2x) %.02x ", i, msg[i+5]);
+          //printf("i(%0.2x) %.02x ", i, msg[i+5]);
         }
-        printf("\n");
+        //printf("\n");
       }
       if(msg[4] == 1) {
         if(msg[3]>24) {
           msg[3]=24;
         }
-        printf("[G] ");
+        //printf("[G] ");
         for(int i = 0; i<(msg[3]); i++) {
           if(msg[1] == 0) {
             pixel0[i].color.g = msg[i+5];
           } else {
             pixel1[i].color.g = msg[i+5];
           }
-          printf("i(%0.2x) %.02x ", i, msg[i+5]);
+          //printf("i(%0.2x) %.02x ", i, msg[i+5]);
         }
-        printf("\n");
+        //printf("\n");
       }
       if(msg[4] == 2) {
         if(msg[3]>24) {
           msg[3]=24;
         }
-        printf("[B] ");
+        //printf("[B] ");
         for(int i = 0; i<(msg[3]); i++) {
           if(msg[1] == 0) {
             pixel0[i].color.b = msg[i+5];
           } else {
             pixel1[i].color.b = msg[i+5];
           }
-          printf("i(%0.2x) %.02x ", i, msg[i+5]);
+          //printf("i(%0.2x) %.02x ", i, msg[i+5]);
         }
-        printf("\n");
+        //printf("\n");
       }
       uint8_t corsairLightingNodeReply[16];
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
@@ -407,7 +413,7 @@ static int8_t CUSTOM_HID_OutEvent_FS(uint8_t event_idx, uint8_t state)
     }
 
     default: {
-      //printf("Other event_idx %.02x\n", msg[0]);
+      printf("Other event_idx %.02x\n", msg[0]);
       uint8_t corsairLightingNodeReply[16];
       CUSTOM_HID_SendOk(corsairLightingNodeReply, 0);
       break;

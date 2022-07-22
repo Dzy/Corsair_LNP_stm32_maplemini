@@ -71,7 +71,8 @@ Middlewares/ST/STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid.c \
 Core/Src/flash_storage.c \
 Core/Src/crc.c \
 Core/Src/dma.c \
-Core/Src/tim.c
+Core/Src/tim.c \
+Core/Src/ledplayer.c
 
 #Core/Src/dma.c \
 #Core/Src/tim.c

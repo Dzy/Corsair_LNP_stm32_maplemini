@@ -27,16 +27,14 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
-#include <stdbool.h>
+#include "ledplayer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct {
-  uint32_t booted;
-} __attribute__((aligned(4))) Settings_TypeDef;
+extern Settings_TypeDef settings;
 extern bool led_trigger;
+extern bool ledsupdated;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -52,7 +50,6 @@ extern bool led_trigger;
 
 /* USER CODE BEGIN PV */
 uint8_t device_serial_32[4];
-bool ledsupdated = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,14 +71,6 @@ int _write(int file, char *data, int len) {
    return (status == HAL_OK ? len : 0);
 }
 /* USER CODE END 0 */
-typedef union {
-  struct {
-    uint8_t b;
-    uint8_t r;
-    uint8_t g;
-  } color;
-  uint32_t data;
-} PixelRGB_t;
 
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
 {
@@ -90,30 +79,21 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
   ledsupdated = true;
 }
 
-#define NEOPIXEL_ZERO 27
-#define NEOPIXEL_ONE  57
-#define NEOPIXEL_RESET 0
-#define NUM_PIXELS0 12
-#define NUM_PIXELS1 12
-#define DMA_BUFF_SIZE0 ((24+2)*24)
-#define DMA_BUFF_SIZE1 ((24+2)*24)
-
-PixelRGB_t pixel0[(NUM_PIXELS0+1)];
-uint32_t dmaBuffer0[DMA_BUFF_SIZE0];
-uint32_t *pBuff0;
-PixelRGB_t pixel1[(NUM_PIXELS0+1)];
-uint32_t dmaBuffer1[DMA_BUFF_SIZE1];
-uint32_t *pBuff1;
 /**
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
-{
+int main(void) {
   /* USER CODE BEGIN 1 */
 
-   int32_t i, j;
+  int32_t i, j;
 
+  settings.standalone         = true;
+  settings.led_count_channel0 = 6;
+  settings.led_count_channel1 = 6;
+
+  ledsupdated = true;
+  led_trigger = false;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -122,7 +102,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  Settings_TypeDef settings;
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -131,7 +111,7 @@ int main(void)
   /* USER CODE BEGIN SysInit */
   MX_CRC_Init();
   MX_USART1_UART_Init();
-  printf("%.lx\n",(uint32_t)flash_storage_init(sizeof(settings)));
+  //printf("%.lx\n",(uint32_t)flash_storage_init(sizeof(settings)));
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -144,70 +124,12 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint8_t x = 0;
+
   while (1)
   {
     /* USER CODE END WHILE */
-HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
-    /* USER CODE BEGIN 3 */
-/*
-    for (i = 0; i < NUM_PIXELS0; i++) {
-      pixel0[i].color.r = x;
-      pixel0[i].color.g = 0;
-      pixel0[i].color.b = 0;
-    }
-    for (i = 0; i < NUM_PIXELS1; i++) {
-      pixel1[i].color.r = 0;
-      pixel1[i].color.g = 0;
-      pixel1[i].color.b = x;
-    }
-    x+=10;
-*/
-    pBuff0 = dmaBuffer0;
-    for (i = 0; i < NUM_PIXELS0; i++) {
-       for (j = 23; j >= 0; j--) {
-         if ((pixel0[i].data >> j) & 0x01) {
-           *pBuff0 = NEOPIXEL_ONE;
-         } else {
-           *pBuff0 = NEOPIXEL_ZERO;
-         }
-         pBuff0++;
-     }
-    }
-    *pBuff0++ = NEOPIXEL_RESET;
-    *pBuff0++ = NEOPIXEL_RESET;
 
-    pBuff1 = dmaBuffer1;
-    for (i = 0; i < NUM_PIXELS1; i++) {
-       for (j = 23; j >= 0; j--) {
-         if ((pixel1[i].data >> j) & 0x01) {
-           *pBuff1 = NEOPIXEL_ONE;
-         } else {
-           *pBuff1 = NEOPIXEL_ZERO;
-         }
-         pBuff1++;
-     }
-    }
-    *pBuff1++ = NEOPIXEL_RESET;
-    *pBuff0++ = NEOPIXEL_RESET;
-
-    //dmaBuffer0[DMA_BUFF_SIZE0 - 1] = 0; // last element must be 0!
-    //dmaBuffer1[DMA_BUFF_SIZE1 - 1] = 0; // last element must be 0!
-    HAL_Delay(1);
-    HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_RESET);
-    while(led_trigger != true);
-
-    //printf("HAL_TIM_PWM_Start_DMA\n");
-    HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_1, dmaBuffer0, DMA_BUFF_SIZE0);
-    HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_2, dmaBuffer1, DMA_BUFF_SIZE1);
-    while(ledsupdated != true);
-    //HAL_Delay(1);
-    led_trigger = false;
-
-    
-    
-    //HAL_Delay(10);
-    
+    /* USER CODE BEGIN 3 */    
   }
   /* USER CODE END 3 */
 }
