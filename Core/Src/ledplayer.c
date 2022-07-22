@@ -12,8 +12,9 @@ PixelRGB_TypeDef pixel1[(MAX_NUM_PIXELS0+2)];
 uint32_t dmaBuffer1[DMA_BUFF_SIZE1];
 uint32_t *pBuff1;
 
-bool led_trigger;
-bool ledsupdated;
+bool led_trigger = false;
+bool ledsupdated = true;
+bool ready2run   = false;
 
 void ledplayer(void) {
 	HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);

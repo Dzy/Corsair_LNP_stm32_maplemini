@@ -35,6 +35,7 @@
 extern Settings_TypeDef settings;
 extern bool led_trigger;
 extern bool ledsupdated;
+extern bool ready2run;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -72,8 +73,7 @@ int _write(int file, char *data, int len) {
 }
 /* USER CODE END 0 */
 
-void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
-{
+void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
   HAL_TIM_PWM_Stop_DMA(htim, TIM_CHANNEL_1);
   HAL_TIM_PWM_Stop_DMA(htim, TIM_CHANNEL_2);
   ledsupdated = true;
@@ -84,9 +84,6 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)
   * @retval int
   */
 int main(void) {
-  /* USER CODE BEGIN 1 */
-
-  int32_t i, j;
 
   settings.standalone         = true;
   settings.led_count_channel0 = 6;
@@ -94,44 +91,22 @@ int main(void) {
 
   ledsupdated = true;
   led_trigger = false;
-  /* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
   MX_CRC_Init();
   MX_USART1_UART_Init();
-  //printf("%.lx\n",(uint32_t)flash_storage_init(sizeof(settings)));
-  /* USER CODE END SysInit */
 
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM2_Init();
   MX_USB_DEVICE_Init();
-  /* USER CODE BEGIN 2 */
-  /* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+  ready2run = true;
+  while (1);
 
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */    
-  }
-  /* USER CODE END 3 */
 }
 
 /**

@@ -59,6 +59,8 @@
 extern PCD_HandleTypeDef hpcd_USB_FS;
 extern DMA_HandleTypeDef hdma_tim2_ch1;
 extern TIM_HandleTypeDef htim2;
+
+extern bool ready2run;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -190,7 +192,9 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-  ledplayer();
+  if(ready2run) {
+    ledplayer();
+  }
   /* USER CODE END SysTick_IRQn 1 */
 }
 
