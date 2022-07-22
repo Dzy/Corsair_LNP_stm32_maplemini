@@ -16,30 +16,60 @@ bool led_trigger = false;
 bool ledsupdated = true;
 bool ready2run   = false;
 
+uint32_t last_tick = 0, new_tick = 0, ticks_since = 0;
+
+RGBColor_TypeDef rgb;
+HSVColor_TypeDef hsv0;
+HSVColor_TypeDef hsv1;
+
 void ledplayer(void) {
 	HAL_GPIO_WritePin(ACTIVITY_GPIO_Port, ACTIVITY_Pin, GPIO_PIN_SET);
-	if(settings.standalone) {
-		//printf("Standalone %lu\n", (uint32_t)HAL_GetTick());
 
-		RGBColor_TypeDef rgb;
-		HSVColor_TypeDef hsv;
+	new_tick = HAL_GetTick();
+	ticks_since = new_tick - last_tick;
 
-		uint8_t hue = 0;
+	if(ticks_since>=50) {
+		last_tick = new_tick;
 
-		/*
-		for (int i = 0; i < NUM_LEDS; ++i) {
-			leds[i] = CHSV(hue + (i * 10), 255, 255);
+		if(settings.channel[0].mode == CHANNEL_MODE_ON) {
+			if(ledsupdated) {
+
+				hsv0.s = 255;
+				hsv0.v = 255;
+				for (uint32_t i = 0; i < settings.channel[0].led_count; ++i) {
+					hsv0.h += i*1;
+					rgb = HSV2RGB(hsv0);
+					pixel0[i].color.r = rgb.r;
+					pixel0[i].color.g = rgb.g;
+					pixel0[i].color.b = rgb.b;
+				}
+    			hsv0.h++;
+    			led_trigger = true;
+    		}
 		}
 
-    	hue++;
-		*/
-	} else {
+		if(settings.channel[1].mode == CHANNEL_MODE_ON) {
+			if(ledsupdated) {
+
+  				hsv1.s = 255;
+				hsv1.v = 255;
+				for (uint32_t i = 0; i < settings.channel[1].led_count; ++i) {
+					hsv1.h += i*1;
+					rgb = HSV2RGB(hsv1);
+					pixel1[i].color.r = rgb.r;
+					pixel1[i].color.g = rgb.g;
+					pixel1[i].color.b = rgb.b;
+				}
+   				hsv1.h++;
+   				led_trigger = true;
+			}
+		}
 	}
 
 	if(led_trigger&&ledsupdated){
     	pBuff0 = dmaBuffer0;
-    	for (uint32_t i = 0; i < settings.led_count_channel0; i++) {
-    		for (int32_t j = 23; j >= 0; j--) {
+    	for (uint32_t i = 0; i < settings.channel[0].led_count; i++) {
+    		for (int j = 23; j >= 0; j--) {
         		if ((pixel0[i].data >> j) & 0x01) {
         			*pBuff0 = NEOPIXEL_ONE;
         		} else {
@@ -52,7 +82,7 @@ void ledplayer(void) {
     	*pBuff0++ = NEOPIXEL_RESET;
 
     	pBuff1 = dmaBuffer1;
-    	for (uint32_t i = 0; i < settings.led_count_channel1; i++) {
+    	for (uint32_t i = 0; i < settings.channel[1].led_count; i++) {
     		for (int32_t j = 23; j >= 0; j--) {
         	if ((pixel1[i].data >> j) & 0x01) {
         		*pBuff1 = NEOPIXEL_ONE;

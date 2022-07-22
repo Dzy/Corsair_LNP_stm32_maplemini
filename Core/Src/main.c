@@ -36,6 +36,14 @@ extern Settings_TypeDef settings;
 extern bool led_trigger;
 extern bool ledsupdated;
 extern bool ready2run;
+
+extern PixelRGB_TypeDef pixel0[];
+extern uint32_t dmaBuffer0[];
+extern uint32_t *pBuff0;
+
+extern PixelRGB_TypeDef pixel1[];
+extern uint32_t dmaBuffer1[];
+extern uint32_t *pBuff1;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -85,9 +93,11 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
   */
 int main(void) {
 
-  settings.standalone         = true;
-  settings.led_count_channel0 = 6;
-  settings.led_count_channel1 = 6;
+  settings.channel_count        = 2;
+  settings.channel[0].led_count = 6;
+  settings.channel[0].mode      = CHANNEL_MODE_ON;
+  settings.channel[1].led_count = 60;
+  settings.channel[1].mode      = CHANNEL_MODE_ON;
 
   ledsupdated = true;
   led_trigger = false;
